@@ -48,7 +48,7 @@ const Register = () => {
               <label className="block text-sm font-medium text-gray-300 mb-1.5">Full name</label>
               <input
                 type="text" name="name" value={form.name} onChange={handleChange} required
-                placeholder="Ronit Bongale"
+                placeholder="Joe Doe"
                 className="w-full bg-gray-800 border border-gray-700 text-white placeholder-gray-500 rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition"
               />
             </div>
