@@ -4,6 +4,7 @@ const { extractTextFromPDF } = require('../services/pdf.service');
 const { chunkText } = require('../services/chunk.service');
 const { generateResponse } = require('../services/ai.service');
 const { buildSummaryPrompt } = require('../utils/prompt.utils');
+const fs = require('fs');
 
 // @POST /api/documents/upload
 const uploadDocument = async (req, res, next) => {
@@ -28,8 +29,8 @@ const uploadDocument = async (req, res, next) => {
       document: { id: document._id, originalName: document.originalName, status: document.status },
     });
 
-    // Process asynchronously (don't block response)
-    processDocument(document, req.user._id);
+    // Process immediately (synchronous-ish, but after response is sent)
+    setImmediate(() => processDocument(document, req.user._id));
   } catch (error) {
     next(error);
   }
@@ -38,13 +39,30 @@ const uploadDocument = async (req, res, next) => {
 // Background processing: extract text, chunk, summarize
 const processDocument = async (document, userId) => {
   try {
-    // 1. Extract text
+    console.log(`[SmartDoc] Starting processing for ${document._id}`);
+
+    // 1. Check file exists
+    if (!fs.existsSync(document.filePath)) {
+      throw new Error(`File not found at path: ${document.filePath}`);
+    }
+
+    // 2. Extract text
+    console.log(`[SmartDoc] Extracting text from ${document.filePath}`);
     const rawText = await extractTextFromPDF(document.filePath);
 
-    // 2. Chunk text
-    const chunks = chunkText(rawText);
+    if (!rawText || rawText.trim().length < 10) {
+      throw new Error('PDF text extraction returned empty content');
+    }
+    console.log(`[SmartDoc] Extracted ${rawText.length} characters`);
 
-    // 3. Save chunks to DB
+    // 3. Chunk text
+    const chunks = chunkText(rawText);
+    if (chunks.length === 0) {
+      throw new Error('No chunks generated from text');
+    }
+    console.log(`[SmartDoc] Generated ${chunks.length} chunks`);
+
+    // 4. Save chunks to DB
     const chunkDocs = chunks.map(c => ({
       document: document._id,
       user: userId,
@@ -52,22 +70,34 @@ const processDocument = async (document, userId) => {
       chunkIndex: c.chunkIndex,
     }));
     await Chunk.insertMany(chunkDocs);
+    console.log(`[SmartDoc] Saved ${chunks.length} chunks to DB`);
 
-    // 4. Generate summary
-    const summaryPrompt = buildSummaryPrompt(rawText);
-    const summary = await generateResponse(summaryPrompt);
+    // 5. Generate summary (with fallback if AI fails)
+    let summary = '';
+    try {
+      const summaryPrompt = buildSummaryPrompt(rawText);
+      summary = await generateResponse(summaryPrompt);
+      console.log(`[SmartDoc] Summary generated successfully`);
+    } catch (aiError) {
+      console.error(`[SmartDoc] AI summary failed (non-fatal):`, aiError.message);
+      // Use first 500 chars as fallback summary so document still works
+      summary = `Document processed successfully. ${rawText.slice(0, 500)}...`;
+    }
 
-    // 5. Update document status
+    // 6. Update document status to ready
     await Document.findByIdAndUpdate(document._id, {
       status: 'ready',
       totalChunks: chunks.length,
       summary,
     });
 
-    console.log(`[SmartDoc] Document ${document._id} processed: ${chunks.length} chunks`);
+    console.log(`[SmartDoc] Document ${document._id} ready — ${chunks.length} chunks`);
   } catch (error) {
-    await Document.findByIdAndUpdate(document._id, { status: 'failed' });
     console.error(`[SmartDoc] Processing failed for ${document._id}:`, error.message);
+    await Document.findByIdAndUpdate(document._id, {
+      status: 'failed',
+      summary: `Processing failed: ${error.message}`,
+    });
   }
 };
 

@@ -20,7 +20,12 @@ const Register = () => {
       toast.success('Account created!');
       navigate('/dashboard');
     } catch (err) {
-      toast.error(err.response?.data?.message || 'Registration failed');
+      // Show specific error message for easier debugging
+      const msg = err.response?.data?.message
+        || err.message
+        || 'Registration failed — check console for details';
+      toast.error(msg);
+      console.error('[SmartDoc Register Error]', err);
     } finally {
       setLoading(false);
     }
