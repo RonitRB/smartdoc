@@ -1,44 +1,38 @@
 const { GoogleGenerativeAI } = require('@google/generative-ai');
 
-let genAI;
-let model;
+// Supported models in order of preference
+const MODELS = ['gemini-2.0-flash', 'gemini-1.5-flash', 'gemini-1.5-pro', 'gemini-pro'];
 
-const initModel = () => {
-  if (!model) {
-    if (!process.env.GEMINI_API_KEY) {
-      throw new Error('GEMINI_API_KEY is not set in environment variables');
-    }
-    genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
-    // Try gemini-1.5-flash first (most available on free tier)
-    model = genAI.getGenerativeModel({ model: 'gemini-1.5-flash' });
-  }
-  return model;
-};
-
-/**
- * Generate a response from Gemini given a prompt
- * @param {string} prompt
- * @returns {Promise<string>}
- */
 const generateResponse = async (prompt) => {
-  try {
-    const m = initModel();
-    const result = await m.generateContent(prompt);
-    const response = await result.response;
-    return response.text();
-  } catch (error) {
-    console.error('[SmartDoc AI] Gemini error:', error.message);
-    // If model not found, try fallback model name
-    if (error.message?.includes('not found') || error.message?.includes('404')) {
-      console.log('[SmartDoc AI] Trying fallback model: gemini-pro');
-      genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
-      model = genAI.getGenerativeModel({ model: 'gemini-pro' });
-      const result = await model.generateContent(prompt);
-      const response = await result.response;
-      return response.text();
-    }
-    throw error;
+  if (!process.env.GEMINI_API_KEY) {
+    throw new Error('GEMINI_API_KEY environment variable is not set');
   }
+
+  const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
+
+  for (const modelName of MODELS) {
+    try {
+      console.log(`[SmartDoc AI] Trying model: ${modelName}`);
+      const model = genAI.getGenerativeModel({ model: modelName });
+      const result = await model.generateContent(prompt);
+      const text = result.response.text();
+      console.log(`[SmartDoc AI] Success with model: ${modelName}`);
+      return text;
+    } catch (err) {
+      console.warn(`[SmartDoc AI] Model ${modelName} failed: ${err.message}`);
+      if (
+        err.message?.includes('not found') ||
+        err.message?.includes('404') ||
+        err.message?.includes('not supported') ||
+        err.message?.includes('deprecated')
+      ) {
+        continue; // try next model
+      }
+      throw err; // non-model error (quota, auth, etc) — throw immediately
+    }
+  }
+
+  throw new Error('All Gemini models failed. Check your API key and quota.');
 };
 
 module.exports = { generateResponse };

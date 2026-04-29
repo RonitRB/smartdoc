@@ -1,15 +1,17 @@
 const pdfParse = require('pdf-parse');
 const fs = require('fs');
 
-/**
- * Extract raw text from a PDF file
- * @param {string} filePath - Path to the PDF file
- * @returns {Promise<string>} - Extracted text
- */
 const extractTextFromPDF = async (filePath) => {
-  const dataBuffer = fs.readFileSync(filePath);
-  const data = await pdfParse(dataBuffer);
-  return data.text;
+  try {
+    const dataBuffer = fs.readFileSync(filePath);
+    const data = await pdfParse(dataBuffer);
+    const text = data.text || '';
+    console.log(`[SmartDoc PDF] Extracted ${text.length} chars, ${data.numpages} pages`);
+    return text;
+  } catch (err) {
+    console.error(`[SmartDoc PDF] Extraction error: ${err.message}`);
+    throw new Error(`PDF extraction failed: ${err.message}`);
+  }
 };
 
 module.exports = { extractTextFromPDF };

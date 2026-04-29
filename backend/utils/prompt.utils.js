@@ -1,40 +1,34 @@
-/**
- * Build the RAG prompt for the LLM
- * Injects retrieved context chunks + user query
- */
-
 const buildQAPrompt = (query, chunks) => {
   const context = chunks
-    .map((chunk, i) => `[Chunk ${i + 1}]:\n${chunk.content}`)
-    .join('\n\n');
+    .map((c, i) => `[Source ${i + 1}]:\n${c.content}`)
+    .join('\n\n---\n\n');
 
-  return `You are SmartDoc, an AI assistant that answers questions strictly based on the provided document context.
+  return `You are SmartDoc, an AI assistant that answers questions based strictly on provided document content.
 
-CONTEXT FROM DOCUMENT:
+DOCUMENT CONTEXT:
 ${context}
 
-USER QUESTION:
-${query}
+USER QUESTION: ${query}
 
 INSTRUCTIONS:
-- Answer ONLY using information from the context above.
-- If the answer is not in the context, say: "I couldn't find this information in the uploaded document."
-- Be concise and accurate.
-- At the end of your answer, mention which chunk(s) you used (e.g. "Source: Chunk 1, Chunk 3").
+- Answer using ONLY the information in the document context above.
+- Be clear, concise, and accurate.
+- If the answer is not in the context, say: "I couldn't find this in the uploaded document."
+- Reference which source(s) you used at the end (e.g. "Based on Source 1 and 2").
 
 ANSWER:`;
 };
 
 const buildSummaryPrompt = (text) => {
-  const truncated = text.slice(0, 8000); // limit input size
-  return `You are SmartDoc, an AI document summarizer.
+  const truncated = text.slice(0, 6000);
+  return `Summarize the following document clearly and concisely.
 
-Summarize the following document content clearly and concisely. Include:
-1. Main topic or purpose
-2. Key points (3-5 bullet points)
-3. Important conclusions or findings
+Include:
+1. What this document is about (1-2 sentences)
+2. Key points (3-5 bullet points)  
+3. Main conclusions or takeaways
 
-DOCUMENT CONTENT:
+DOCUMENT:
 ${truncated}
 
 SUMMARY:`;

@@ -26,7 +26,8 @@ const Chat = () => {
         ]);
         setDocument(docRes.data.document);
         setMessages(historyRes.data.messages || []);
-      } catch {
+      } catch (err) {
+        console.error('Chat init error:', err);
         toast.error('Failed to load document');
         navigate('/dashboard');
       } finally {
@@ -34,32 +35,41 @@ const Chat = () => {
       }
     };
     init();
-  }, [documentId]);
+  }, [documentId, navigate]);
 
   useEffect(() => {
     bottomRef.current?.scrollIntoView({ behavior: 'smooth' });
-  }, [messages]);
+  }, [messages, loading]);
 
   const handleAsk = async (e) => {
-    e.preventDefault();
-    if (!question.trim() || loading) return;
+    e?.preventDefault();
+    const q = question.trim();
+    if (!q || loading) return;
 
-    const userMessage = { role: 'user', content: question };
-    setMessages(prev => [...prev, userMessage]);
+    setMessages(prev => [...prev, { role: 'user', content: q }]);
     setQuestion('');
     setLoading(true);
 
     try {
-      const res = await api.post(`/chat/${documentId}`, { question });
-      const aiMessage = { role: 'assistant', content: res.data.answer, citations: res.data.citations };
-      setMessages(prev => [...prev, aiMessage]);
+      const res = await api.post(`/chat/${documentId}`, { question: q });
+      setMessages(prev => [...prev, {
+        role: 'assistant',
+        content: res.data.answer,
+        citations: res.data.citations || [],
+      }]);
     } catch (err) {
-      toast.error(err.response?.data?.message || 'Failed to get answer');
-      setMessages(prev => prev.slice(0, -1)); // remove optimistic user message
+      const msg = err.response?.data?.message || 'Failed to get answer';
+      toast.error(msg);
+      setMessages(prev => prev.slice(0, -1));
     } finally {
       setLoading(false);
-      inputRef.current?.focus();
+      setTimeout(() => inputRef.current?.focus(), 100);
     }
+  };
+
+  const handleSuggestion = (q) => {
+    setQuestion(q);
+    setTimeout(() => inputRef.current?.focus(), 100);
   };
 
   const handleClear = async () => {
@@ -67,12 +77,10 @@ const Chat = () => {
       await api.delete(`/chat/${documentId}/history`);
       setMessages([]);
       toast.success('Chat cleared');
-    } catch {
-      toast.error('Failed to clear chat');
-    }
+    } catch { toast.error('Failed to clear chat'); }
   };
 
-  const suggestedQuestions = [
+  const suggested = [
     'What is this document about?',
     'Summarize the key points',
     'What are the main conclusions?',
@@ -95,47 +103,38 @@ const Chat = () => {
 
   return (
     <div className="min-h-screen bg-gray-950 flex flex-col">
-      {/* Navbar */}
       <nav className="border-b border-gray-800 bg-gray-900/50 backdrop-blur-sm sticky top-0 z-10 flex-shrink-0">
         <div className="h-14 px-4 flex items-center justify-between gap-4">
-          <div className="flex items-center gap-3">
-            <button onClick={() => navigate('/dashboard')} className="text-gray-400 hover:text-white transition-colors">
+          <div className="flex items-center gap-3 min-w-0">
+            <button onClick={() => navigate('/dashboard')} className="text-gray-400 hover:text-white transition-colors flex-shrink-0">
               <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M15 19l-7-7 7-7" />
               </svg>
             </button>
-            <div className="w-px h-5 bg-gray-800"/>
-            <div className="flex items-center gap-2">
-              <div className="w-6 h-6 bg-indigo-600 rounded-md flex items-center justify-center">
+            <div className="w-px h-5 bg-gray-800 flex-shrink-0"/>
+            <div className="flex items-center gap-2 min-w-0">
+              <div className="w-6 h-6 bg-indigo-600 rounded-md flex items-center justify-center flex-shrink-0">
                 <svg className="w-3.5 h-3.5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
                 </svg>
               </div>
-              <span className="text-white text-sm font-medium truncate max-w-[200px] sm:max-w-xs">
-                {document?.originalName}
-              </span>
+              <span className="text-white text-sm font-medium truncate">{document?.originalName}</span>
             </div>
           </div>
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-2 flex-shrink-0">
             <button
               onClick={() => setShowSummary(!showSummary)}
               className={`text-xs px-3 py-1.5 rounded-lg border transition-colors ${showSummary ? 'border-indigo-500 text-indigo-400 bg-indigo-500/10' : 'border-gray-700 text-gray-400 hover:text-white'}`}
-            >
-              Summary
-            </button>
+            >Summary</button>
             {messages.length > 0 && (
-              <button onClick={handleClear} className="text-xs text-gray-500 hover:text-red-400 transition-colors px-2 py-1.5">
-                Clear
-              </button>
+              <button onClick={handleClear} className="text-xs text-gray-500 hover:text-red-400 transition-colors px-2">Clear</button>
             )}
           </div>
         </div>
       </nav>
 
       <div className="flex flex-1 overflow-hidden">
-        {/* Chat area */}
         <div className="flex-1 flex flex-col min-w-0">
-          {/* Messages */}
           <div className="flex-1 overflow-y-auto px-4 py-6 space-y-6">
             {messages.length === 0 ? (
               <div className="flex flex-col items-center justify-center h-full gap-6 pb-10">
@@ -146,16 +145,12 @@ const Chat = () => {
                     </svg>
                   </div>
                   <p className="text-white font-medium">Ask anything about this document</p>
-                  <p className="text-gray-400 text-sm mt-1">I'll answer based only on the document content</p>
+                  <p className="text-gray-400 text-sm mt-1">Answers are grounded in the document content</p>
                 </div>
-                {/* Suggested questions */}
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 w-full max-w-lg">
-                  {suggestedQuestions.map((q, i) => (
-                    <button
-                      key={i}
-                      onClick={() => setQuestion(q)}
-                      className="text-left text-sm text-gray-300 bg-gray-900 border border-gray-800 hover:border-gray-600 rounded-xl px-4 py-3 transition-colors"
-                    >
+                  {suggested.map((q, i) => (
+                    <button key={i} onClick={() => handleSuggestion(q)}
+                      className="text-left text-sm text-gray-300 bg-gray-900 border border-gray-800 hover:border-gray-600 rounded-xl px-4 py-3 transition-colors">
                       {q}
                     </button>
                   ))}
@@ -163,17 +158,15 @@ const Chat = () => {
               </div>
             ) : (
               <>
-                {messages.map((msg, i) => (
-                  <MessageBubble key={i} message={msg} />
-                ))}
+                {messages.map((msg, i) => <MessageBubble key={i} message={msg} />)}
                 {loading && (
                   <div className="flex gap-3">
                     <div className="w-8 h-8 rounded-full bg-gray-700 flex items-center justify-center flex-shrink-0 text-xs font-semibold text-gray-300">AI</div>
                     <div className="bg-gray-800 rounded-2xl rounded-tl-sm px-4 py-3">
                       <div className="flex gap-1 items-center h-5">
-                        <span className="w-1.5 h-1.5 bg-gray-400 rounded-full animate-bounce" style={{ animationDelay: '0ms' }}/>
-                        <span className="w-1.5 h-1.5 bg-gray-400 rounded-full animate-bounce" style={{ animationDelay: '150ms' }}/>
-                        <span className="w-1.5 h-1.5 bg-gray-400 rounded-full animate-bounce" style={{ animationDelay: '300ms' }}/>
+                        {[0,150,300].map(d => (
+                          <span key={d} className="w-1.5 h-1.5 bg-gray-400 rounded-full animate-bounce" style={{ animationDelay: `${d}ms` }}/>
+                        ))}
                       </div>
                     </div>
                   </div>
@@ -183,22 +176,19 @@ const Chat = () => {
             )}
           </div>
 
-          {/* Input */}
           <div className="border-t border-gray-800 p-4 flex-shrink-0">
             <form onSubmit={handleAsk} className="flex gap-2">
               <input
                 ref={inputRef}
                 value={question}
                 onChange={e => setQuestion(e.target.value)}
+                onKeyDown={e => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); handleAsk(); }}}
                 placeholder="Ask a question about the document..."
                 disabled={loading}
                 className="flex-1 bg-gray-900 border border-gray-700 focus:border-indigo-500 text-white placeholder-gray-500 rounded-xl px-4 py-3 text-sm focus:outline-none transition-colors"
               />
-              <button
-                type="submit"
-                disabled={loading || !question.trim()}
-                className="bg-indigo-600 hover:bg-indigo-500 disabled:opacity-40 disabled:cursor-not-allowed text-white px-4 py-3 rounded-xl transition-colors flex-shrink-0"
-              >
+              <button type="submit" disabled={loading || !question.trim()}
+                className="bg-indigo-600 hover:bg-indigo-500 disabled:opacity-40 disabled:cursor-not-allowed text-white px-4 py-3 rounded-xl transition-colors flex-shrink-0">
                 <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8" />
                 </svg>
@@ -208,7 +198,6 @@ const Chat = () => {
           </div>
         </div>
 
-        {/* Summary sidebar */}
         {showSummary && (
           <div className="w-72 border-l border-gray-800 bg-gray-900/30 flex-shrink-0 hidden md:block overflow-y-auto">
             <SummaryPanel document={document} />

@@ -2,11 +2,8 @@ const multer = require('multer');
 const path = require('path');
 const fs = require('fs');
 
-// Render free tier only allows writes to /tmp
-// Use /tmp in production, ./uploads in development
-const uploadDir = process.env.NODE_ENV === 'production'
-  ? '/tmp/smartdoc-uploads'
-  : (process.env.UPLOAD_PATH || './uploads');
+// /tmp is the only writable directory on Render free tier
+const uploadDir = '/tmp/smartdoc-uploads';
 
 if (!fs.existsSync(uploadDir)) {
   fs.mkdirSync(uploadDir, { recursive: true });
@@ -23,17 +20,12 @@ const storage = multer.diskStorage({
 });
 
 const fileFilter = (req, file, cb) => {
-  if (file.mimetype === 'application/pdf') {
-    cb(null, true);
-  } else {
-    cb(new Error('Only PDF files are allowed'), false);
-  }
+  if (file.mimetype === 'application/pdf') return cb(null, true);
+  cb(new Error('Only PDF files are allowed'), false);
 };
 
-const upload = multer({
+module.exports = multer({
   storage,
   fileFilter,
-  limits: { fileSize: parseInt(process.env.MAX_FILE_SIZE) || 10 * 1024 * 1024 },
+  limits: { fileSize: 10 * 1024 * 1024 }, // 10MB
 });
-
-module.exports = upload;

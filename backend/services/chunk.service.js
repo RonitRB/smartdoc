@@ -1,60 +1,50 @@
-/**
- * Split text into semantic chunks for RAG retrieval
- * Strategy: paragraph-aware chunking with overlap
- */
+const CHUNK_SIZE = 800;
+const CHUNK_OVERLAP = 100;
 
-const CHUNK_SIZE = 800;       // characters per chunk
-const CHUNK_OVERLAP = 100;    // overlap between chunks for context continuity
-
-/**
- * Split text into overlapping chunks
- * @param {string} text - Full extracted text
- * @returns {Array<{content: string, chunkIndex: number}>}
- */
 const chunkText = (text) => {
-  // Clean up excessive whitespace
-  const cleaned = text.replace(/\s+/g, ' ').trim();
+  // Normalize whitespace
+  const cleaned = text.replace(/\r\n/g, '\n').replace(/[ \t]+/g, ' ').trim();
+  
+  // Split by double newlines (paragraphs) or single newlines
+  const paragraphs = cleaned.split(/\n{2,}/).map(p => p.trim()).filter(p => p.length > 30);
 
-  // Split into paragraphs first for semantic coherence
-  const paragraphs = cleaned.split(/\n{2,}/).filter(p => p.trim().length > 50);
+  if (!paragraphs.length) {
+    // Fallback: split raw text by size
+    const chunks = [];
+    for (let i = 0; i < cleaned.length; i += CHUNK_SIZE - CHUNK_OVERLAP) {
+      const content = cleaned.slice(i, i + CHUNK_SIZE).trim();
+      if (content) chunks.push({ content, chunkIndex: chunks.length });
+    }
+    return chunks;
+  }
 
   const chunks = [];
-  let currentChunk = '';
-  let chunkIndex = 0;
+  let current = '';
 
-  for (const paragraph of paragraphs) {
-    if ((currentChunk + ' ' + paragraph).length <= CHUNK_SIZE) {
-      currentChunk += (currentChunk ? ' ' : '') + paragraph;
+  for (const para of paragraphs) {
+    if ((current + '\n' + para).length <= CHUNK_SIZE) {
+      current = current ? current + '\n' + para : para;
     } else {
-      if (currentChunk) {
-        chunks.push({ content: currentChunk.trim(), chunkIndex });
-        chunkIndex++;
-        // Keep overlap from the end of the previous chunk
-        currentChunk = currentChunk.slice(-CHUNK_OVERLAP) + ' ' + paragraph;
+      if (current) {
+        chunks.push({ content: current.trim(), chunkIndex: chunks.length });
+        // Overlap: carry last part of previous chunk
+        current = current.slice(-CHUNK_OVERLAP) + '\n' + para;
       } else {
-        // Paragraph itself is too large — split by sentences
-        const sentences = paragraph.match(/[^.!?]+[.!?]+/g) || [paragraph];
-        for (const sentence of sentences) {
-          if ((currentChunk + ' ' + sentence).length <= CHUNK_SIZE) {
-            currentChunk += (currentChunk ? ' ' : '') + sentence;
+        // Single paragraph larger than chunk size — split by sentences
+        const sentences = para.match(/[^.!?]+[.!?]+[\s]*/g) || [para];
+        for (const s of sentences) {
+          if ((current + s).length <= CHUNK_SIZE) {
+            current += s;
           } else {
-            if (currentChunk) {
-              chunks.push({ content: currentChunk.trim(), chunkIndex });
-              chunkIndex++;
-              currentChunk = sentence;
-            } else {
-              chunks.push({ content: sentence.trim(), chunkIndex });
-              chunkIndex++;
-            }
+            if (current.trim()) chunks.push({ content: current.trim(), chunkIndex: chunks.length });
+            current = s;
           }
         }
       }
     }
   }
 
-  if (currentChunk.trim()) {
-    chunks.push({ content: currentChunk.trim(), chunkIndex });
-  }
+  if (current.trim()) chunks.push({ content: current.trim(), chunkIndex: chunks.length });
 
   return chunks;
 };
