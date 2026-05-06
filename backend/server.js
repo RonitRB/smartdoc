@@ -12,13 +12,11 @@ const app = express();
 app.use(cors({
   origin: (origin, callback) => {
     if (!origin) return callback(null, true);
-    if (
-      origin.endsWith('.vercel.app') ||
-      origin === process.env.CLIENT_URL ||
-      origin === 'http://localhost:5173' ||
-      origin === 'http://localhost:3000'
-    ) return callback(null, true);
-    return callback(null, true); // allow all for now — tighten after testing
+    if (origin.endsWith('.vercel.app') || origin === process.env.CLIENT_URL ||
+        origin === 'http://localhost:5173' || origin === 'http://localhost:3000') {
+      return callback(null, true);
+    }
+    return callback(null, true);
   },
   credentials: true,
   methods: ['GET','POST','PUT','DELETE','OPTIONS'],
@@ -32,12 +30,13 @@ app.use(express.urlencoded({ extended: true }));
 app.use('/api/auth',      require('./routes/auth.routes'));
 app.use('/api/documents', require('./routes/document.routes'));
 app.use('/api/chat',      require('./routes/chat.routes'));
+app.use('/api/generate',  require('./routes/generate.routes'));
 
 app.get('/api/health', (req, res) => {
-  res.json({ status: 'SmartDoc API is running', timestamp: new Date() });
+  res.json({ status: 'SmartDoc API is running', timestamp: new Date(), version: '2.0' });
 });
 
 app.use(errorMiddleware);
 
 const PORT = process.env.PORT || 5000;
-app.listen(PORT, () => console.log(`SmartDoc server running on port ${PORT}`));
+app.listen(PORT, () => console.log(`SmartDoc v2 server running on port ${PORT}`));
