@@ -7,6 +7,7 @@ import Register from './pages/Register';
 import Dashboard from './pages/Dashboard';
 import Chat from './pages/Chat';
 import Generate from './pages/Generate';
+import Analytics from './pages/Analytics';
 
 const PrivateRoute = ({ children }) => {
   const { user, loading } = useAuth();
@@ -50,6 +51,7 @@ const App = () => (
         <Route path="/dashboard" element={<PrivateRoute><Dashboard /></PrivateRoute>} />
         <Route path="/chat/:documentId" element={<PrivateRoute><Chat /></PrivateRoute>} />
         <Route path="/generate/:documentId" element={<PrivateRoute><Generate /></PrivateRoute>} />
+        <Route path="/analytics" element={<PrivateRoute><Analytics /></PrivateRoute>} />
         <Route path="*" element={<Navigate to="/" />} />
       </Routes>
     </BrowserRouter>

@@ -1,16 +1,29 @@
-const buildQAPrompt = (query, chunks) => {
-  const context = chunks.map((c, i) => `[Source ${i + 1}]:\n${c.content}`).join('\n\n---\n\n');
+const buildQAPrompt = (query, chunks, context = []) => {
+  const docContext = chunks.map((c, i) => `[Source ${i + 1}]:\n${c.content}`).join('\n\n---\n\n');
+
+  // Build conversation history if available
+  let conversationHistory = '';
+  if (context && context.length > 1) {
+    const history = context.slice(0, -1); // exclude the current question (it's already separate)
+    if (history.length > 0) {
+      conversationHistory = '\nCONVERSATION HISTORY (for context on follow-up questions):\n' +
+        history.map(m => `${m.role === 'user' ? 'User' : 'Assistant'}: ${m.content.slice(0, 500)}`).join('\n') +
+        '\n';
+    }
+  }
+
   return `You are SmartDoc, an expert AI assistant that answers questions based strictly on provided document content.
 
 DOCUMENT CONTEXT:
-${context}
-
+${docContext}
+${conversationHistory}
 USER QUESTION: ${query}
 
 INSTRUCTIONS:
 - Answer using ONLY the information in the document context above.
 - Be thorough, clear, and well-structured in your response.
 - Use bullet points, numbered lists, or headings when appropriate for readability.
+- If the user references something from the conversation history, use that context to understand their question.
 - If the answer is not in the context, say: "I couldn't find this information in the uploaded document."
 - Reference which source(s) you used at the end of your answer.
 
@@ -70,6 +83,22 @@ DOCUMENT:
 ${truncated}
 
 QUIZ:`,
+
+    flashcards: `Generate 10 flashcards based on the following document. Each flashcard should have:
+- **Front**: A clear, specific question
+- **Back**: A concise, accurate answer (1-3 sentences)
+
+Format each flashcard as:
+CARD 1:
+Front: [question]
+Back: [answer]
+
+Make the flashcards cover the most important concepts, facts, and definitions. Language: ${language}.
+
+DOCUMENT:
+${truncated}
+
+FLASHCARDS:`,
 
     keywords: `Extract the most important keywords, topics, and themes from the following document. Group them into: Main Topics, Key Terms, Important Names/Places, and Core Concepts. Language: ${language}.
 

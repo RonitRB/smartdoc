@@ -1,8 +1,9 @@
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect, useRef, useCallback } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import api from '../services/api';
 import MessageBubble from '../components/MessageBubble';
 import SummaryPanel from '../components/SummaryPanel';
+import VoiceInput from '../components/VoiceInput';
 import toast from 'react-hot-toast';
 
 const Chat = () => {
@@ -14,6 +15,7 @@ const Chat = () => {
   const [loading, setLoading] = useState(false);
   const [initializing, setInitializing] = useState(true);
   const [showSummary, setShowSummary] = useState(false);
+  const [streamingIndex, setStreamingIndex] = useState(-1);
   const bottomRef = useRef(null);
   const inputRef = useRef(null);
 
@@ -45,16 +47,17 @@ const Chat = () => {
     e?.preventDefault();
     const q = question.trim();
     if (!q || loading) return;
-    setMessages(prev => [...prev, { role: 'user', content: q }]);
+    const userMsg = { role: 'user', content: q };
+    setMessages(prev => [...prev, userMsg]);
     setQuestion('');
     setLoading(true);
     try {
-      const res = await api.post(`/chat/${documentId}`, { question: q });
-      setMessages(prev => [...prev, {
-        role: 'assistant',
-        content: res.data.answer,
-        citations: res.data.citations || [],
-      }]);
+      // Send last 4 messages as context for conversational follow-up
+      const context = [...messages.slice(-4), userMsg].map(m => ({ role: m.role, content: m.content }));
+      const res = await api.post(`/chat/${documentId}`, { question: q, context });
+      const aiMsg = { role: 'assistant', content: res.data.answer, citations: res.data.citations || [], isNew: true };
+      setMessages(prev => [...prev, aiMsg]);
+      setStreamingIndex(messages.length + 1); // trigger typewriter on new message
     } catch (err) {
       toast.error(err.response?.data?.message || 'Failed to get answer');
       setMessages(prev => prev.slice(0, -1));
@@ -63,6 +66,11 @@ const Chat = () => {
       setTimeout(() => inputRef.current?.focus(), 100);
     }
   };
+
+  const handleVoiceResult = useCallback((transcript) => {
+    setQuestion(transcript);
+    setTimeout(() => inputRef.current?.focus(), 100);
+  }, []);
 
   const handleSuggestion = (q) => {
     setQuestion(q);
@@ -93,7 +101,7 @@ const Chat = () => {
     'What is this document about?',
     'Summarize the key points',
     'What are the main conclusions?',
-    'What topics are covered?',
+    'Extract all important data and figures',
   ];
 
   if (initializing) {
@@ -109,7 +117,6 @@ const Chat = () => {
 
   return (
     <div className="min-h-screen bg-surface-950 flex flex-col">
-      {/* Navbar */}
       <nav className="nav-glass sticky top-0 z-10 flex-shrink-0">
         <div className="h-14 px-4 flex items-center justify-between gap-4">
           <div className="flex items-center gap-3 min-w-0">
@@ -122,13 +129,14 @@ const Chat = () => {
                 <svg className="w-3.5 h-3.5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" /></svg>
               </div>
               <span className="text-white text-sm font-medium truncate">{document?.originalName}</span>
+              <span className="text-[10px] text-brand-300 bg-brand-500/10 border border-brand-500/20 px-2 py-0.5 rounded-full font-medium hidden sm:block">RAG Chat</span>
             </div>
           </div>
           <div className="flex items-center gap-2 flex-shrink-0">
             <button onClick={() => setShowSummary(!showSummary)} className={`text-xs px-3 py-1.5 rounded-lg border transition-all ${showSummary ? 'border-brand-500/50 text-brand-300 bg-brand-500/10' : 'border-white/10 text-gray-400 hover:text-white hover:border-white/20'}`}>Summary</button>
             {messages.length > 0 && (
               <>
-                <button onClick={handleExport} className="text-xs text-gray-500 hover:text-brand-400 transition-colors px-2" title="Export chat">
+                <button onClick={handleExport} className="text-gray-500 hover:text-brand-400 transition-colors p-1.5 hover:bg-white/5 rounded-lg" title="Export chat">
                   <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" /></svg>
                 </button>
                 <button onClick={handleClear} className="text-xs text-gray-500 hover:text-red-400 transition-colors px-2">Clear</button>
@@ -140,7 +148,6 @@ const Chat = () => {
 
       <div className="flex flex-1 overflow-hidden">
         <div className="flex-1 flex flex-col min-w-0">
-          {/* Messages */}
           <div className="flex-1 overflow-y-auto px-4 py-6 space-y-6">
             {messages.length === 0 ? (
               <div className="flex flex-col items-center justify-center h-full gap-6 pb-10 animate-fade-in">
@@ -149,19 +156,19 @@ const Chat = () => {
                     <svg className="w-8 h-8 text-brand-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" /></svg>
                   </div>
                   <p className="text-white font-semibold text-lg">Ask anything about this document</p>
-                  <p className="text-gray-400 text-sm mt-1">Answers are grounded in the document content using RAG</p>
+                  <p className="text-gray-400 text-sm mt-1">Powered by RAG with TF-IDF retrieval · Supports follow-up questions</p>
                 </div>
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 w-full max-w-lg">
                   {suggested.map((q, i) => (
-                    <button key={i} onClick={() => handleSuggestion(q)} className="text-left text-sm text-gray-300 glass-card rounded-xl px-4 py-3 card-hover hover:text-white">
-                      {q}
-                    </button>
+                    <button key={i} onClick={() => handleSuggestion(q)} className="text-left text-sm text-gray-300 glass-card rounded-xl px-4 py-3 card-hover hover:text-white">{q}</button>
                   ))}
                 </div>
               </div>
             ) : (
               <>
-                {messages.map((msg, i) => <MessageBubble key={i} message={msg} index={i} />)}
+                {messages.map((msg, i) => (
+                  <MessageBubble key={i} message={msg} index={i} isStreaming={i === streamingIndex} onStreamComplete={() => setStreamingIndex(-1)} />
+                ))}
                 {loading && (
                   <div className="flex gap-3 animate-fade-in">
                     <div className="w-8 h-8 rounded-full bg-gradient-to-br from-brand-500 to-violet-600 flex items-center justify-center flex-shrink-0 text-xs font-bold text-white shadow-lg shadow-brand-500/20">AI</div>
@@ -179,19 +186,18 @@ const Chat = () => {
             )}
           </div>
 
-          {/* Input */}
           <div className="border-t border-white/5 p-4 flex-shrink-0 bg-surface-950/80 backdrop-blur-sm">
             <form onSubmit={handleAsk} className="flex gap-2">
               <input ref={inputRef} value={question} onChange={e => setQuestion(e.target.value)} onKeyDown={e => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); handleAsk(); }}} placeholder="Ask a question about the document..." disabled={loading} className="input-field flex-1" id="chat-input" />
+              <VoiceInput onResult={handleVoiceResult} disabled={loading} />
               <button type="submit" disabled={loading || !question.trim()} className="btn-primary !px-4 !py-3 !rounded-xl flex-shrink-0 disabled:opacity-40 disabled:cursor-not-allowed disabled:transform-none disabled:shadow-none">
                 <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8" /></svg>
               </button>
             </form>
-            <p className="text-xs text-gray-600 text-center mt-2">Answers are grounded in your uploaded document · Press Enter to send</p>
+            <p className="text-xs text-gray-600 text-center mt-2">RAG-powered answers · Voice input supported · Enter to send</p>
           </div>
         </div>
 
-        {/* Summary panel */}
         {showSummary && (
           <div className="w-80 border-l border-white/5 bg-surface-900/50 flex-shrink-0 hidden md:block overflow-y-auto animate-slide-down">
             <SummaryPanel document={document} />

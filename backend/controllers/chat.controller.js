@@ -4,10 +4,10 @@ const { retrieveRelevantChunks } = require('../services/retrieval.service');
 const { generateResponse } = require('../services/ai.service');
 const { buildQAPrompt } = require('../utils/prompt.utils');
 
-// @POST /api/chat/:documentId
+// @POST /api/chat/:documentId — with conversational context support
 const askQuestion = async (req, res, next) => {
   try {
-    const { question } = req.body;
+    const { question, context } = req.body;
     const { documentId } = req.params;
 
     if (!question?.trim()) {
@@ -26,7 +26,8 @@ const askQuestion = async (req, res, next) => {
       return res.status(400).json({ success: false, message: 'No content found in document to answer from' });
     }
 
-    const prompt = buildQAPrompt(question, relevantChunks);
+    // Build prompt with conversation context for follow-up questions
+    const prompt = buildQAPrompt(question, relevantChunks, context);
     const answer = await generateResponse(prompt);
 
     const citations = relevantChunks.map(c => ({

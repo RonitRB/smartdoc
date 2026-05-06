@@ -3,7 +3,7 @@ const Chunk = require('../models/Chunk.model');
 const { generateResponse } = require('../services/ai.service');
 const { buildContentPrompt } = require('../utils/prompt.utils');
 
-const VALID_TYPES = ['blog', 'social', 'email', 'bullets', 'quiz', 'keywords', 'translate', 'presentation', 'mindmap'];
+const VALID_TYPES = ['blog', 'social', 'email', 'bullets', 'quiz', 'flashcards', 'keywords', 'translate', 'presentation', 'mindmap'];
 
 // @POST /api/generate/:documentId
 const generateContent = async (req, res, next) => {
