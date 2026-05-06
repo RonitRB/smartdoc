@@ -1,6 +1,7 @@
 const fs = require('fs');
 const Document = require('../models/Document.model');
 const Chunk = require('../models/Chunk.model');
+const Chat = require('../models/Chat.model');
 const { extractTextFromPDF } = require('../services/pdf.service');
 const { chunkText } = require('../services/chunk.service');
 const { generateResponse } = require('../services/ai.service');
@@ -51,12 +52,15 @@ const processDocument = async (document, userId) => {
     }
     console.log(`[SmartDoc] Extracted ${rawText.length} characters`);
 
-    // 3. Chunk
+    // 3. Calculate metadata
+    const wordCount = rawText.split(/\s+/).filter(Boolean).length;
+
+    // 4. Chunk
     const chunks = chunkText(rawText);
     if (!chunks.length) throw new Error('Chunking produced no results');
     console.log(`[SmartDoc] ${chunks.length} chunks created`);
 
-    // 4. Save chunks
+    // 5. Save chunks
     await Chunk.deleteMany({ document: document._id }); // clean up any previous attempt
     await Chunk.insertMany(chunks.map(c => ({
       document: document._id,
@@ -65,7 +69,7 @@ const processDocument = async (document, userId) => {
       chunkIndex: c.chunkIndex,
     })));
 
-    // 5. Generate summary — graceful fallback if AI fails
+    // 6. Generate summary — graceful fallback if AI fails
     let summary = '';
     try {
       summary = await generateResponse(buildSummaryPrompt(rawText));
@@ -74,14 +78,15 @@ const processDocument = async (document, userId) => {
       summary = rawText.slice(0, 600).trim() + '...';
     }
 
-    // 6. Mark ready
+    // 7. Mark ready
     await Document.findByIdAndUpdate(document._id, {
       status: 'ready',
       totalChunks: chunks.length,
+      wordCount,
       summary,
     });
 
-    console.log(`[SmartDoc] ✅ Ready: ${document.originalName} — ${chunks.length} chunks`);
+    console.log(`[SmartDoc] ✅ Ready: ${document.originalName} — ${chunks.length} chunks, ${wordCount} words`);
   } catch (err) {
     console.error(`[SmartDoc] ❌ Failed: ${document.originalName} — ${err.message}`);
     await Document.findByIdAndUpdate(document._id, { status: 'failed', summary: err.message });
@@ -106,13 +111,28 @@ const getDocument = async (req, res, next) => {
   } catch (error) { next(error); }
 };
 
-// @DELETE /api/documents/:id
+// @DELETE /api/documents/:id — also cleans up chunks and chat history
 const deleteDocument = async (req, res, next) => {
   try {
     const document = await Document.findOneAndDelete({ _id: req.params.id, user: req.user._id });
     if (!document) return res.status(404).json({ success: false, message: 'Document not found' });
-    await Chunk.deleteMany({ document: req.params.id });
-    res.json({ success: true, message: 'Document deleted' });
+
+    // Clean up all associated data
+    await Promise.all([
+      Chunk.deleteMany({ document: req.params.id }),
+      Chat.deleteMany({ document: req.params.id }),
+    ]);
+
+    // Try to delete the file from disk (non-fatal if it fails)
+    try {
+      if (document.filePath && fs.existsSync(document.filePath)) {
+        fs.unlinkSync(document.filePath);
+      }
+    } catch (fileErr) {
+      console.warn(`[SmartDoc] Could not delete file: ${fileErr.message}`);
+    }
+
+    res.json({ success: true, message: 'Document and all associated data deleted' });
   } catch (error) { next(error); }
 };
 

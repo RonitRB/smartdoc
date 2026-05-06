@@ -1,24 +1,22 @@
-# Environment files — NEVER commit these
-.env
-.env.local
-.env.development
-.env.production
-.env.test
-
 # Dependencies
 node_modules/
+.env
 
 # Build output
 dist/
 build/
 
-# Logs
-*.log
-npm-debug.log*
-
 # OS files
 .DS_Store
 Thumbs.db
 
-# Uploads
-backend/uploads/
+# Editor
+.vscode/
+.idea/
+
+# Uploads (local dev)
+uploads/
+
+# Logs
+*.log
+npm-debug.log*

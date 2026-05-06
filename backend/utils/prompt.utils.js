@@ -1,6 +1,6 @@
 const buildQAPrompt = (query, chunks) => {
   const context = chunks.map((c, i) => `[Source ${i + 1}]:\n${c.content}`).join('\n\n---\n\n');
-  return `You are SmartDoc, an AI assistant that answers questions based strictly on provided document content.
+  return `You are SmartDoc, an expert AI assistant that answers questions based strictly on provided document content.
 
 DOCUMENT CONTEXT:
 ${context}
@@ -9,9 +9,10 @@ USER QUESTION: ${query}
 
 INSTRUCTIONS:
 - Answer using ONLY the information in the document context above.
-- Be clear, concise, and accurate.
-- If the answer is not in the context, say: "I couldn't find this in the uploaded document."
-- Reference which source(s) you used at the end.
+- Be thorough, clear, and well-structured in your response.
+- Use bullet points, numbered lists, or headings when appropriate for readability.
+- If the answer is not in the context, say: "I couldn't find this information in the uploaded document."
+- Reference which source(s) you used at the end of your answer.
 
 ANSWER:`;
 };
@@ -24,6 +25,8 @@ Include:
 2. Key points (3-5 bullet points)
 3. Main conclusions or takeaways
 
+Keep the summary professional and well-structured.
+
 DOCUMENT:
 ${truncated}
 
@@ -33,7 +36,7 @@ SUMMARY:`;
 const buildContentPrompt = (type, text, language = 'English') => {
   const truncated = text.slice(0, 5000);
   const prompts = {
-    blog: `Write a detailed, engaging blog post based on the following document content. Include a catchy title, introduction, main sections with headings, and a conclusion. Language: ${language}.
+    blog: `Write a detailed, engaging blog post based on the following document content. Include a catchy title, introduction, main sections with headings, and a conclusion. Make it informative and reader-friendly. Language: ${language}.
 
 DOCUMENT:
 ${truncated}
@@ -54,7 +57,7 @@ ${truncated}
 
 EMAIL:`,
 
-    bullets: `Extract and present the most important key takeaways from the following document as clear, concise bullet points. Group them by topic if applicable. Language: ${language}.
+    bullets: `Extract and present the most important key takeaways from the following document as clear, concise bullet points. Group them by topic if applicable. Aim for 8-12 points. Language: ${language}.
 
 DOCUMENT:
 ${truncated}
@@ -81,6 +84,34 @@ DOCUMENT:
 ${truncated}
 
 TRANSLATION:`,
+
+    presentation: `Create a presentation slide deck outline based on the following document. For each slide include:
+- **Slide title**
+- **3-4 bullet points** for the slide content
+- **Speaker notes** (1-2 sentences of what to say)
+
+Create 8-12 slides including a Title Slide, Agenda, main content slides, Key Takeaways, and a Q&A slide. Language: ${language}.
+
+DOCUMENT:
+${truncated}
+
+PRESENTATION OUTLINE:`,
+
+    mindmap: `Create a hierarchical mind map structure based on the following document. Use this format:
+- **Central Topic** (main subject)
+  - **Branch 1** (major theme)
+    - Sub-topic 1.1
+    - Sub-topic 1.2
+  - **Branch 2** (major theme)
+    - Sub-topic 2.1
+    - Sub-topic 2.2
+
+Identify 4-6 major branches with 2-4 sub-topics each. Make it comprehensive and well-organized. Language: ${language}.
+
+DOCUMENT:
+${truncated}
+
+MIND MAP:`,
   };
   return prompts[type] || prompts.bullets;
 };

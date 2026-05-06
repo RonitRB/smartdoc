@@ -7,6 +7,8 @@ const documentSchema = new mongoose.Schema({
   filePath: { type: String, required: true },
   fileSize: { type: Number },
   totalChunks: { type: Number, default: 0 },
+  wordCount: { type: Number, default: 0 },
+  pageCount: { type: Number, default: 0 },
   summary: { type: String, default: '' },
   status: { type: String, enum: ['processing', 'ready', 'failed'], default: 'processing' },
 }, { timestamps: true });
