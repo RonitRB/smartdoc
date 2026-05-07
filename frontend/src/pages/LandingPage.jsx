@@ -85,7 +85,6 @@ const TECH = [
 const TEAM = [
   { name: 'Ronit Bongale', role: 'Full-Stack Developer' },
   { name: 'Sachin Kumar', role: 'Developer' },
-  { name: 'Rohit Tegginamath', role: 'Developer' },
   { name: 'Subhash MP', role: 'Developer' },
 ];
 
