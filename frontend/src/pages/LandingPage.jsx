@@ -211,9 +211,9 @@ const LandingPage = () => {
           <h2 className="text-3xl sm:text-4xl font-bold text-white mb-4">Our Team</h2>
           <p className="text-gray-400 text-lg">Built by passionate developers</p>
         </div>
-        <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
+        <div className="flex flex-wrap justify-center gap-6">
           {TEAM.map((m, i) => (
-            <div key={i} className="glass-card rounded-2xl p-5 text-center card-hover">
+            <div key={i} className="glass-card rounded-2xl p-6 text-center card-hover w-full sm:w-64">
               <div className="w-14 h-14 mx-auto mb-3 rounded-full bg-gradient-to-br from-brand-500 to-violet-600 flex items-center justify-center text-white font-bold text-lg shadow-lg shadow-brand-500/20">
                 {m.name.split(' ').map(n => n[0]).join('')}
               </div>
