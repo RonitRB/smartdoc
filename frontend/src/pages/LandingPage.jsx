@@ -10,7 +10,7 @@ const FEATURES = [
       </svg>
     ),
     title: 'RAG-Powered Chat',
-    desc: 'Ask any question about your PDF — answers are grounded in your document using Retrieval-Augmented Generation.',
+    desc: 'Ask any question about your PDF - answers are grounded in your document using Retrieval-Augmented Generation.',
     gradient: 'from-blue-500 to-indigo-600',
   },
   {
@@ -83,9 +83,9 @@ const TECH = [
 ];
 
 const TEAM = [
-  { name: 'Ronit Bongale', role: 'Full-Stack Developer' },
-  { name: 'Sachin Kumar', role: 'Developer' },
-  { name: 'Subhash MP', role: 'Developer' },
+  { name: 'Ronit Bongale', role: 'Team Lead & AI Architect (Backend)' },
+  { name: 'Sachin Kumar', role: 'Backend Developer' },
+  { name: 'Subhash MP', role: 'Frontend & UX Specialist' },
 ];
 
 const LandingPage = () => {
@@ -130,7 +130,7 @@ const LandingPage = () => {
         <div className="animate-fade-in">
           <div className="inline-flex items-center gap-2 text-xs font-medium text-brand-300 bg-brand-500/10 border border-brand-500/20 rounded-full px-4 py-1.5 mb-6">
             <span className="w-1.5 h-1.5 bg-emerald-400 rounded-full animate-pulse" />
-            SuprMentr Bootcamp & Internship 2026 — Project #73
+            SuprMentr Bootcamp & Internship 2026 - Project #73
           </div>
           <h1 className="text-5xl sm:text-6xl lg:text-7xl font-extrabold text-white leading-tight tracking-tight mb-6 text-balance">
             Chat with your PDFs{' '}
@@ -138,7 +138,7 @@ const LandingPage = () => {
           </h1>
           <p className="text-lg sm:text-xl text-gray-400 max-w-2xl mx-auto mb-10 leading-relaxed">
             Upload any PDF document and instantly start a conversation with it.
-            Generate blog posts, summaries, quizzes, and more — powered by RAG architecture and LLaMA AI.
+            Generate blog posts, summaries, quizzes, and more - powered by RAG architecture and LLaMA AI.
           </p>
           <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
             <Link to="/register" className="btn-primary !py-3.5 !px-8 !text-base !rounded-xl flex items-center gap-2">
@@ -249,7 +249,7 @@ const LandingPage = () => {
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
               </svg>
             </div>
-            <span className="text-gray-400 text-sm">SmartDoc — SuprMentr Internship 2026</span>
+            <span className="text-gray-400 text-sm">SmartDoc - SuprMentr Internship 2026</span>
           </div>
           <p className="text-gray-600 text-xs">Built with ❤️ by Team #73</p>
         </div>

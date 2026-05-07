@@ -5,19 +5,19 @@ import toast from 'react-hot-toast';
 import ReactMarkdown from 'react-markdown';
 
 const CONTENT_TYPES = [
-  { id: 'blog',         label: 'Blog Post',        icon: '✍️', desc: 'Full blog article with sections' },
-  { id: 'social',       label: 'Social Media',      icon: '📱', desc: 'Posts for LinkedIn, Twitter, etc.' },
-  { id: 'email',        label: 'Email Draft',       icon: '📧', desc: 'Professional email with subject' },
-  { id: 'bullets',      label: 'Key Takeaways',     icon: '📌', desc: 'Bullet-point summary' },
-  { id: 'quiz',         label: 'Quiz Questions',    icon: '❓', desc: 'Multiple-choice questions' },
-  { id: 'flashcards',   label: 'Flashcards',        icon: '🃏', desc: 'Interactive study flashcards' },
-  { id: 'keywords',     label: 'Keywords & Topics', icon: '🏷️', desc: 'Extract key terms and themes' },
-  { id: 'translate',    label: 'Translate',          icon: '🌐', desc: 'Translate to another language' },
-  { id: 'presentation', label: 'Presentation',      icon: '📊', desc: 'Slide deck outline with notes' },
-  { id: 'mindmap',      label: 'Mind Map',           icon: '🧠', desc: 'Hierarchical concept map' },
+  { id: 'blog', label: 'Blog Post', icon: '✍️', desc: 'Full blog article with sections' },
+  { id: 'social', label: 'Social Media', icon: '📱', desc: 'Posts for LinkedIn, Twitter, etc.' },
+  { id: 'email', label: 'Email Draft', icon: '📧', desc: 'Professional email with subject' },
+  { id: 'bullets', label: 'Key Takeaways', icon: '📌', desc: 'Bullet-point summary' },
+  { id: 'quiz', label: 'Quiz Questions', icon: '❓', desc: 'Multiple-choice questions' },
+  { id: 'flashcards', label: 'Flashcards', icon: '🃏', desc: 'Interactive study flashcards' },
+  { id: 'keywords', label: 'Keywords & Topics', icon: '🏷️', desc: 'Extract key terms and themes' },
+  { id: 'translate', label: 'Translate', icon: '🌐', desc: 'Translate to another language' },
+  { id: 'presentation', label: 'Presentation', icon: '📊', desc: 'Slide deck outline with notes' },
+  { id: 'mindmap', label: 'Mind Map', icon: '🧠', desc: 'Hierarchical concept map' },
 ];
 
-const LANGUAGES = ['English','Hindi','Kannada','Tamil','Telugu','Spanish','French','German','Arabic','Japanese','Chinese'];
+const LANGUAGES = ['English', 'Hindi', 'Kannada', 'Tamil', 'Telugu', 'Spanish', 'French', 'German', 'Arabic', 'Japanese', 'Chinese'];
 
 // Flashcard parser
 const parseFlashcards = (text) => {
@@ -131,7 +131,7 @@ const Generate = () => {
   if (initializing) return (
     <div className="min-h-screen bg-surface-950 flex items-center justify-center">
       <div className="flex items-center gap-3 text-gray-400 animate-fade-in">
-        <svg className="w-5 h-5 animate-spin" fill="none" viewBox="0 0 24 24"><circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"/><path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8z"/></svg>
+        <svg className="w-5 h-5 animate-spin" fill="none" viewBox="0 0 24 24"><circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" /><path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8z" /></svg>
         <span className="text-sm font-medium">Loading...</span>
       </div>
     </div>
@@ -144,10 +144,10 @@ const Generate = () => {
       <nav className="nav-glass sticky top-0 z-10">
         <div className="h-14 px-4 flex items-center gap-3">
           <button onClick={() => navigate('/dashboard')} className="text-gray-400 hover:text-white transition-colors p-1 hover:bg-white/5 rounded-lg"><svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M15 19l-7-7 7-7" /></svg></button>
-          <div className="w-px h-5 bg-white/10"/>
-          <div className="w-7 h-7 bg-gradient-to-br from-violet-500 to-purple-600 rounded-lg flex items-center justify-center"><svg className="w-3.5 h-3.5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z"/></svg></div>
+          <div className="w-px h-5 bg-white/10" />
+          <div className="w-7 h-7 bg-gradient-to-br from-violet-500 to-purple-600 rounded-lg flex items-center justify-center"><svg className="w-3.5 h-3.5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" /></svg></div>
           <span className="text-white text-sm font-semibold">AI Content Generator</span>
-          <span className="text-gray-600">—</span>
+          <span className="text-gray-600">-</span>
           <span className="text-gray-400 text-sm truncate max-w-xs">{document?.originalName}</span>
         </div>
       </nav>
@@ -178,7 +178,7 @@ const Generate = () => {
           </div>
 
           <button onClick={handleGenerate} disabled={loading} className="btn-primary w-full !text-sm flex items-center justify-center gap-2" id="generate-btn">
-            {loading ? (<><svg className="w-4 h-4 animate-spin" fill="none" viewBox="0 0 24 24"><circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"/><path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8z"/></svg>Generating...</>) : (<><svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z"/></svg>Generate {CONTENT_TYPES.find(t => t.id === selectedType)?.label}</>)}
+            {loading ? (<><svg className="w-4 h-4 animate-spin" fill="none" viewBox="0 0 24 24"><circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" /><path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8z" /></svg>Generating...</>) : (<><svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" /></svg>Generate {CONTENT_TYPES.find(t => t.id === selectedType)?.label}</>)}
           </button>
           <button onClick={() => navigate(`/chat/${documentId}`)} className="btn-secondary w-full mt-3 !text-sm">Switch to Chat mode</button>
         </div>
@@ -206,7 +206,7 @@ const Generate = () => {
           <div className="glass-card rounded-2xl min-h-96 p-6">
             {loading ? (
               <div className="flex flex-col items-center justify-center h-80 gap-4 animate-fade-in">
-                <svg className="w-10 h-10 animate-spin text-brand-400" fill="none" viewBox="0 0 24 24"><circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"/><path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8z"/></svg>
+                <svg className="w-10 h-10 animate-spin text-brand-400" fill="none" viewBox="0 0 24 24"><circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" /><path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8z" /></svg>
                 <p className="text-gray-400 text-sm font-medium">Generating your content...</p>
                 <p className="text-gray-600 text-xs">This may take 10-20 seconds</p>
               </div>
@@ -220,7 +220,7 @@ const Generate = () => {
               )
             ) : (
               <div className="flex flex-col items-center justify-center h-80 gap-3 animate-fade-in">
-                <div className="w-16 h-16 bg-white/5 rounded-2xl flex items-center justify-center"><svg className="w-8 h-8 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M13 10V3L4 14h7v7l9-11h-7z"/></svg></div>
+                <div className="w-16 h-16 bg-white/5 rounded-2xl flex items-center justify-center"><svg className="w-8 h-8 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M13 10V3L4 14h7v7l9-11h-7z" /></svg></div>
                 <p className="text-gray-400 text-sm text-center font-medium">Select a content type and click Generate</p>
                 <p className="text-gray-600 text-xs text-center">AI will create content based on your document</p>
               </div>

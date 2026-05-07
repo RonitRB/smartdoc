@@ -1,6 +1,10 @@
-# SmartDoc — AI Content Generator Website
+# SmartDoc - AI Content Generator Website
 
-> SuprMentr Bootcamp & Internship Program 2026 | Project #73 | Team: Ronit Bongale, Sachin Kumar, Subhash MP
+> SuprMentr Bootcamp & Internship Program 2026 | Project #73
+> **Team:** 
+> - **Ronit Bongale:** Team Lead & AI Architect (Full-Stack Backend)
+> - **Sachin Kumar:** Backend Developer (Systems & Database)
+> - **Subhash MP:** Frontend & UX Specialist (Interactive UI & Analytics)
 
 A full-stack MERN application that lets users upload PDF documents and interact with them using AI-powered Q&A and summarization (RAG architecture).
 
