@@ -17,7 +17,7 @@ A full-stack MERN application that lets users upload PDF documents and interact 
 | Frontend | React.js, Tailwind CSS, Vite |
 | Backend | Node.js, Express.js |
 | Database | MongoDB |
-| AI | Google Gemini API |
+| AI | Groq AI (Llama 3.3) |
 | File Handling | Multer, pdf-parse |
 | Deployment | Vercel (Frontend), Render (Backend) |
 
@@ -31,7 +31,7 @@ A full-stack MERN application that lets users upload PDF documents and interact 
 cd backend
 npm install
 cp .env.example .env
-# Fill in your MONGO_URI and GEMINI_API_KEY in .env
+# Fill in your MONGO_URI and GROQ_API_KEY in .env
 npm run dev
 ```
 
@@ -49,7 +49,7 @@ npm run dev
 PORT=5000
 MONGO_URI=your_mongodb_uri
 JWT_SECRET=your_jwt_secret
-GEMINI_API_KEY=your_gemini_api_key
+GROQ_API_KEY=your_groq_api_key
 ```
 
 ---
